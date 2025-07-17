@@ -1,0 +1,90 @@
+# Python
+venv/
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.sqlite3
+*.log
+
+# Environment
+.env
+.env.*
+
+# VSCode / IDEs
+.vscode/
+.idea/
+
+# Byte-compiled / optimized / DLL files
+*.so
+*.dll
+*.dylib
+
+# Celery
+celerybeat-schedule
+
+# Redis dump files
+dump.rdb
+
+# Node & React
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Vite cache
+frontend/.vitepress/cache
+frontend/.cache/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Mac system files
+.DS_Store
+
+# Playwright cache
+playwright/.cache/
+playwright-report/
+test-results/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.sqlite3
+*.db
+venv/
+.env
+*.env
+
+# FastAPI logs
+*.log
+*.pid
+celerybeat-schedule
+*.sqlite3-journal
+
+# Node
+node_modules/
+dist/
+.cache/
+.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# VSCode
+.vscode/
+
+# React build
+frontend/build/
+frontend/dist/
+
+# Playwright
+playwright-report/

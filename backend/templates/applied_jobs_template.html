@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    body { font-family: Arial, sans-serif; font-size: 12px; }
+    h1 { color: #1a73e8; }
+    .job { margin-bottom: 15px; border-bottom: 1px solid #ccc; padding-bottom: 10px; }
+    .job-title { font-weight: bold; font-size: 14px; }
+    .company { color: #555; }
+    .url { font-size: 11px; color: #1a0dab; }
+    .date { font-size: 10px; color: #888; }
+  </style>
+</head>
+<body>
+  <h1>Job Applications for {{ username }}</h1>
+  {% for job in jobs %}
+    <div class="job">
+      <div class="job-title">{{ job.job_title }}</div>
+      <div class="company">{{ job.company_name }}</div>
+      <div class="url">{{ job.job_url }}</div>
+      <div class="date">Applied on: {{ job.applied_at }}</div>
+    </div>
+  {% endfor %}
+</body>
+</html>
