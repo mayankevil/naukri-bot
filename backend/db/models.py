@@ -1,63 +1,53 @@
-from sqlalchemy import Column, Integer, String, Boolean
-from backend.db.database import Base
-from .database import Base
-from sqlalchemy import ForeignKey
-from sqlalchemy.orm import relationship
-from sqlalchemy import DateTime, Text
+from sqlalchemy import Boolean, Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy.orm import relationship, declarative_base
 from datetime import datetime
 
-naukri_email = Column(String)
-naukri_password = Column(String)  # store encrypted in future
-
-
-
-class AppliedJob(Base):
-    __tablename__ = "applied_jobs"
-
-    id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
-    job_title = Column(String)
-    company_name = Column(String)
-    job_url = Column(String)
-    applied_at = Column(DateTime, default=datetime.utcnow)
-
-    user = relationship("User", backref="applied_jobs")
-
-
-class UserProfile(Base):
-    __tablename__ = "user_profiles"
-    id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
-    resume_path = Column(String, nullable=True)
-    keywords = Column(String)
-    notice_period = Column(String)
-    current_ctc = Column(String)
-    expected_ctc = Column(String)
-    experience = Column(String)
-    preferred_locations = Column(String)
-    security_answers = Column(String)
-
-    user = relationship("User", backref="profile")
-
+Base = declarative_base()
 
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, unique=True, index=True)
-    email = Column(String, unique=True)
-    hashed_password = Column(String)
-    is_admin = Column(Boolean, default=False)
-    recommended_jobs = relationship("RecommendedJob", back_populates="user")
+    email = Column(String, unique=True, index=True, nullable=False)
+    username = Column(String, unique=True, index=True, nullable=False)
+    hashed_password = Column(String, nullable=False)
+    is_active = Column(Boolean, default=True)
+    is_superuser = Column(Boolean, default=False)
+    profile = relationship("Profile", back_populates="owner", uselist=False, cascade="all, delete-orphan")
+    applied_jobs = relationship("AppliedJob", back_populates="owner", cascade="all, delete-orphan")
+    recommended_jobs = relationship("RecommendedJob", back_populates="owner", cascade="all, delete-orphan")
+
+class Profile(Base):
+    __tablename__ = "profiles"
+    id = Column(Integer, primary_key=True, index=True)
+    naukri_username = Column(String, index=True)
+    naukri_password = Column(String)
+    keywords = Column(String)
+    locations = Column(String)
+    notice_period = Column(String)
+    ctc = Column(String)
+    resume_path = Column(String)
+    blacklisted_companies = Column(String)
+    blacklisted_keywords = Column(String)
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    owner = relationship("User", back_populates="profile")
+
+class AppliedJob(Base):
+    __tablename__ = "applied_jobs"
+    id = Column(Integer, primary_key=True, index=True)
+    job_title = Column(String, index=True)
+    company_name = Column(String, index=True)
+    job_link = Column(String)
+    applied_date = Column(DateTime, default=datetime.utcnow)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    owner = relationship("User", back_populates="applied_jobs")
 
 class RecommendedJob(Base):
     __tablename__ = "recommended_jobs"
-
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
-    job_title = Column(String)
-    company = Column(String)
-    location = Column(String)
-    url = Column(String)
-    timestamp = Column(DateTime, default=datetime.utcnow)
-
-    user = relationship("User", back_populates="recommended_jobs")
+    job_title = Column(String, index=True)
+    company_name = Column(String, index=True)
+    job_link = Column(String, unique=True)
+    matched_keyword = Column(String, index=True)
+    recommended_date = Column(DateTime, default=datetime.utcnow)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    owner = relationship("User", back_populates="recommended_jobs")

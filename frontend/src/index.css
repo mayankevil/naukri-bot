@@ -1,3 +1,45 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary text-white font-bold py-2 px-4 rounded-lg hover:bg-primary-hover transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-secondary {
+    @apply bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded-lg hover:bg-gray-300 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  /* === Styles for Profile Page === */
+  .input-style {
+    @apply block w-full px-3 py-2 bg-white border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm transition-shadow;
+  }
+  
+  .react-tagsinput {
+    @apply w-full flex flex-wrap items-center gap-1.5 !p-1.5 !bg-white !border !border-gray-300 !rounded-lg !shadow-sm;
+  }
+  .react-tagsinput--focused {
+    @apply !border-primary ring-1 ring-primary;
+  }
+  .react-tagsinput-input {
+    @apply !text-sm !font-sans flex-grow;
+  }
+  .react-tagsinput-tag {
+    @apply !bg-primary !text-white !text-sm !rounded !border-none !px-2 !py-1 flex items-center;
+  }
+
+  /* === New Style for Navbar Dropdown === */
+  .dropdown-item {
+    @apply flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100;
+  }
+
+  
+
+.table-header {
+    @apply text-sm font-semibold text-neutral-800 px-6 py-4;
+    }
+.table-cell {
+    @apply px-6 py-4;
+}
+
+}
