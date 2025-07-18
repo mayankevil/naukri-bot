@@ -17,3 +17,4 @@ redis
 aiofiles
 playwright
 aiosmtplib
+pydantic[email]

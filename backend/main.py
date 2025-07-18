@@ -67,7 +67,8 @@ app.add_middleware(
 )
 # This file defines scheduled tasks that run automatically.
 
-from ..core.celery_app import celery_app
+# This is correct
+from .core.celery_app import celery_app
 from celery.schedules import crontab
 
 # This is a special Celery signal that runs after the app is configured.

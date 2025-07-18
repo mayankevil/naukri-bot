@@ -1,79 +1,87 @@
 #!/bin/bash
 
-# This command ensures that the script will exit immediately if any command fails.
-set -e
+# Function to kill processes on a given port
+kill_process_on_port() {
+    PORT=$1
+    # Find the PID of the process using the specified port
+    PID=$(lsof -t -i:$PORT)
 
-# --- Function to kill old processes for a clean start ---
-cleanup() {
-    echo "🧹 Stopping all related services..."
-    # The '|| true' is added to each command. This ensures that if a command fails
-    # (e.g., because no process was found to kill), the script will not exit.
-    lsof -t -i:8000 | xargs -r kill -9 || true
-    lsof -t -i:5173 | xargs -r kill -9 || true
-    pkill -f "celery -A backend.core.celery_app" || true
-    pkill -f "vite" || true
-    echo "✅ Services stopped."
+    if [ -n "$PID" ]; then
+        echo "Killing process $PID on port $PORT"
+        kill -9 $PID
+    else
+        echo "No process found on port $PORT"
+    fi
 }
 
-# This "trap" ensures that the cleanup function is called when you stop the script with Ctrl+C.
-trap 'cleanup; exit 130' INT
+# Stop all services
+echo "🧹 Stopping all related services..."
+kill_process_on_port 8000 # FastAPI backend
+kill_process_on_port 5173 # Vite frontend
+pkill -f "celery" # Kill Celery workers
+echo "✅ Services stopped."
 
-# --- Main Script ---
-
-# Run cleanup at the start to ensure no old processes are running
-cleanup
-
-# --- Backend Setup ---
+# Backend setup
 echo "📦 Setting up backend virtual environment and dependencies..."
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
+echo "✅ Backend setup complete."
+
+# ----------------- ADDITION -----------------
+# Install system dependencies for Playwright
+echo "⚙️ Installing system dependencies for Playwright..."
+sudo apt-get install -y libgstcodecparsers-1.0-0 gstreamer1.0-libav libavif13 libx264-163 libflite1
+echo "✅ System dependencies installed."
+# --------------------------------------------
+
+# Playwright setup
 echo "🧠 Installing Playwright browser..."
-playwright install chromium
+playwright install
+echo "✅ Playwright setup complete."
 
-# --- Database Migration ---
+# Ensure migrations directory exists before running alembic
+echo "📁 Checking for migrations directory..."
+if [ ! -d "backend/db/migrations" ]; then
+    echo "Directory not found. Creating backend/db/migrations..."
+    mkdir -p backend/db/migrations
+fi
+echo "✅ Migrations directory check complete."
+
+
+# Database migrations
 echo "🔧 Running database migrations..."
-# This command will create or update your database tables to match your models.
 alembic upgrade head
+echo "✅ Database is up to date."
 
-# --- Redis Server ---
-echo "🚀 Starting Redis server in the background..."
-redis-server --daemonize yes
-echo "🟢 Redis is running."
-
-# --- Celery Services ---
-echo "🎯 Launching Celery worker in the background..."
-# The app path is updated to point to our new core directory.
-# The -n flag gives the worker a unique name to prevent warnings.
-celery -A backend.core.celery_app worker --loglevel=info -n worker1@%h &
-
-echo "📅 Launching Celery Beat (scheduler) in the background..."
-# Remove the old schedule file to prevent issues on restart
-rm -f celerybeat-schedule
-celery -A backend.core.celery_app beat --loglevel=info &
-
-# --- Frontend Setup ---
-echo "🛠 Setting up frontend dependencies..."
-# Use a subshell to run commands in the frontend directory
+# Frontend setup
+echo "🎨 Setting up frontend dependencies..."
 (cd frontend && npm install)
+echo "✅ Frontend setup complete."
 
-# --- Start Development Servers ---
-echo "🔥 Starting FastAPI backend server..."
-# The --reload-dir flag is crucial to prevent the server from watching
-# the frontend/node_modules directory, which causes instability.
-uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload --reload-dir backend &
+# Start services in the background
+echo "🚀 Starting all services..."
 
-echo "🌐 Starting Frontend Dev Server..."
+# Start Celery worker in a new terminal or as a background process
+echo "Starting Celery worker..."
+celery -A backend.core.celery_app worker --loglevel=info &
+CELERY_PID=$!
+sleep 5 # Give celery a moment to start up
+
+# Start FastAPI server in the background
+echo "Starting FastAPI backend..."
+uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload &
+BACKEND_PID=$!
+sleep 5 # Give backend a moment to start up
+
+# Start Frontend dev server
+echo "Starting frontend..."
 (cd frontend && npm run dev) &
+FRONTEND_PID=$!
 
-echo -e "\n\n✅ All services are starting up. Please wait a moment for them to initialize."
-echo "---------------------------------------------"
-echo "🔹 Frontend:   http://127.0.0.1:5173"
-echo "🔹 FastAPI:     http://127.0.0.1:8000"
-echo "🔹 Redis:      Running"
-echo "🔹 Celery:     Worker + Beat started"
-echo "---------------------------------------------"
+echo "🎉 All services are up and running!"
+echo "Backend available at http://localhost:8000"
+echo "Frontend available at http://localhost:5173"
 
-# The 'wait' command will pause the script here, keeping it alive.
-# When you press Ctrl+C, the trap above will trigger the cleanup function.
+# Keep the script running to see logs, or remove this to let them run in the background
 wait
