@@ -27,7 +27,10 @@ const AuthPage = () => {
         setLoading(true);
         setError('');
 
-        const endpoint = isLoginView ? '/api/auth/token' : '/api/auth/register';
+        const endpoint = isLoginView 
+        ? 'http://localhost:8000/api/auth/token' 
+        : 'http://localhost:8000/api/auth/register';
+
         const payload = isLoginView 
             ? { username: email, password } 
             : { email, password, username };

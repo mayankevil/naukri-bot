@@ -4,13 +4,18 @@ from sqlalchemy.orm import Session
 from datetime import timedelta
 
 # Import all the necessary components from our redesigned structure
-from ..db import crud, schemas
+from ..db import crud, database, schemas, models
 from ..db.database import get_db
 from ..auth import jwt_handler, password_utils
 from ..auth.dependencies import get_current_active_user
 from ..core.config import settings
 
-router = APIRouter()
+# Add a prefix and tags for this router
+router = APIRouter(
+    prefix="/auth",
+    tags=["Authentication"],
+)
+
 
 @router.post("/register", response_model=schemas.User, status_code=status.HTTP_201_CREATED)
 def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
@@ -56,3 +61,38 @@ def read_users_me(current_user: schemas.User = Depends(get_current_active_user))
     It's protected by the get_current_active_user dependency.
     """
     return current_user
+
+
+@router.post("/login/access-token")
+def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    """
+    Authenticate user and return JWT token.
+    """
+    user = crud.authenticate_user(db, email=form_data.username, password=form_data.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token = jwt_handler.create_access_token(data={"sub": user.email})
+    return {"access_token": access_token, "token_type": "bearer"}
+
+@router.post("/api/auth/token")
+def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(database.get_db)):
+    """
+    Authenticate user via form data and return a JWT access token.
+    """
+    # The frontend sends the user's email in the 'username' field of the form.
+    user = crud.authenticate_user(db, email=form_data.username, password=form_data.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Create the token for the authenticated user
+    access_token = jwt_handler.create_access_token(data={"sub": user.email})
+    return {"access_token": access_token, "token_type": "bearer"}
+
